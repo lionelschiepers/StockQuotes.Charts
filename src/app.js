@@ -13,6 +13,7 @@ let currentState = {
   historicalData: null,
   statements: null,
   selectedMetrics: ['totalRevenue'], // Default: Total Revenue selected
+  dateRangeIndices: [0, 0], // Will be initialized when data loads
 };
 
 function showLoading() {
@@ -68,8 +69,91 @@ function handleMetricSelectionChange(metricKey, isSelected) {
     currentState.historicalData,
     currentState.statements,
     currentState.isYearly,
-    currentState.selectedMetrics
+    currentState.selectedMetrics,
+    currentState.dateRangeIndices
   );
+}
+
+function initSlider() {
+  const reports = currentState.isYearly
+    ? currentState.statements.annualReports
+    : currentState.statements.quarterlyReports;
+
+  if (!reports || reports.length === 0) return;
+
+  const sortedReports = [...reports].sort(
+    (a, b) => new Date(a.fiscalDateEnding) - new Date(b.fiscalDateEnding)
+  );
+
+  const minInput = document.getElementById('slider-min');
+  const maxInput = document.getElementById('slider-max');
+  const track = document.getElementById('slider-track');
+  const labelContainer = document.getElementById('slider-labels');
+  const dotContainer = document.getElementById('slider-dots');
+
+  const maxIndex = sortedReports.length - 1;
+  minInput.max = maxIndex;
+  maxInput.max = maxIndex;
+
+  // Default to showing all or last 5
+  const initialStart = Math.max(0, maxIndex - 4);
+  currentState.dateRangeIndices = [initialStart, maxIndex];
+
+  minInput.value = currentState.dateRangeIndices[0];
+  maxInput.value = currentState.dateRangeIndices[1];
+
+  function updateSlider() {
+    let min = parseInt(minInput.value);
+    let max = parseInt(maxInput.value);
+
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+
+    currentState.dateRangeIndices = [min, max];
+
+    const percent1 = (min / maxIndex) * 100;
+    const percent2 = (max / maxIndex) * 100;
+
+    track.style.left = percent1 + '%';
+    track.style.width = percent2 - percent1 + '%';
+
+    updateDashboard();
+  }
+
+  minInput.oninput = updateSlider;
+  maxInput.oninput = updateSlider;
+
+  // Render dots and labels
+  dotContainer.innerHTML = '';
+  labelContainer.innerHTML = '';
+
+  const years = [...new Set(sortedReports.map(r => new Date(r.fiscalDateEnding).getFullYear()))];
+
+  // Render dots for each report (if not too many)
+  if (sortedReports.length <= 20) {
+    sortedReports.forEach(() => {
+      const dot = document.createElement('div');
+      dot.className = 'w-1.5 h-1.5 bg-gray-900 rounded-full opacity-50';
+      dotContainer.appendChild(dot);
+    });
+  }
+
+  // If there are too many reports, just show year start/end or every few years
+  const numLabels = Math.min(years.length, 5);
+  for (let i = 0; i < numLabels; i++) {
+    const yearIdx =
+      numLabels > 1 ? Math.floor((i / (numLabels - 1)) * (years.length - 1)) : 0;
+    const label = document.createElement('span');
+    label.textContent = years[yearIdx];
+    labelContainer.appendChild(label);
+  }
+
+  // Initial track update
+  const percent1 = (currentState.dateRangeIndices[0] / maxIndex) * 100;
+  const percent2 = (currentState.dateRangeIndices[1] / maxIndex) * 100;
+  track.style.left = percent1 + '%';
+  track.style.width = percent2 - percent1 + '%';
 }
 
 function updateDashboard() {
@@ -81,14 +165,16 @@ function updateDashboard() {
     currentState.historicalData,
     currentState.statements,
     currentState.isYearly,
-    currentState.selectedMetrics
+    currentState.selectedMetrics,
+    currentState.dateRangeIndices
   );
   renderTable(
     'financial-table',
     currentState.statements,
     currentState.isYearly,
     currentState.selectedMetrics,
-    handleMetricSelectionChange
+    handleMetricSelectionChange,
+    currentState.dateRangeIndices
   );
 }
 
@@ -118,6 +204,7 @@ async function loadData() {
     currentState.historicalData = historicalData;
     currentState.statements = statements;
 
+    initSlider();
     updateDashboard();
     showDashboard();
   } catch (error) {
@@ -136,6 +223,7 @@ function setupEventListeners() {
     if (!currentState.isYearly) {
       currentState.isYearly = true;
       updateToggleButtons();
+      initSlider();
       updateDashboard();
     }
   });
@@ -144,6 +232,7 @@ function setupEventListeners() {
     if (currentState.isYearly) {
       currentState.isYearly = false;
       updateToggleButtons();
+      initSlider();
       updateDashboard();
     }
   });

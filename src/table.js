@@ -106,10 +106,24 @@ function formatDate(dateStr, isYearly) {
   }
 }
 
-function createTableSection(title, metrics, reports, isYearly, selectedMetrics, onMetricChange) {
-  const sortedReports = [...reports]
-    .sort((a, b) => new Date(b.fiscalDateEnding) - new Date(a.fiscalDateEnding))
-    .slice(0, 5);
+function createTableSection(
+  title,
+  metrics,
+  reports,
+  isYearly,
+  selectedMetrics,
+  onMetricChange,
+  dateRangeIndices
+) {
+  const ascendingSorted = [...reports].sort(
+    (a, b) => new Date(a.fiscalDateEnding) - new Date(b.fiscalDateEnding)
+  );
+
+  const filteredReports = dateRangeIndices
+    ? ascendingSorted.slice(dateRangeIndices[0], dateRangeIndices[1] + 1)
+    : ascendingSorted.slice(-5);
+
+  const sortedReports = [...filteredReports].reverse();
 
   let html = `
     <div class="mb-6">
@@ -174,7 +188,8 @@ export function renderTable(
   statements,
   isYearly,
   selectedMetrics = [],
-  onMetricChange = null
+  onMetricChange = null,
+  dateRangeIndices
 ) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -193,7 +208,8 @@ export function renderTable(
     reports,
     isYearly,
     selectedMetrics,
-    onMetricChange
+    onMetricChange,
+    dateRangeIndices
   );
   html += createTableSection(
     'Balance Sheet',
@@ -201,7 +217,8 @@ export function renderTable(
     reports,
     isYearly,
     selectedMetrics,
-    onMetricChange
+    onMetricChange,
+    dateRangeIndices
   );
   html += createTableSection(
     'Cash Flow',
@@ -209,7 +226,8 @@ export function renderTable(
     reports,
     isYearly,
     selectedMetrics,
-    onMetricChange
+    onMetricChange,
+    dateRangeIndices
   );
 
   container.innerHTML = html;

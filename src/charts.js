@@ -170,7 +170,13 @@ export function initStockPriceChart(containerId, data) {
   stockPriceChart.render();
 }
 
-export function initFinancialChart(containerId, reports, isYearly, selectedMetrics) {
+export function initFinancialChart(
+  containerId,
+  reports,
+  isYearly,
+  selectedMetrics,
+  dateRangeIndices
+) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -185,11 +191,15 @@ export function initFinancialChart(containerId, reports, isYearly, selectedMetri
     return;
   }
 
-  const sortedReports = [...reports]
-    .sort((a, b) => new Date(a.fiscalDateEnding) - new Date(b.fiscalDateEnding))
-    .slice(-5);
+  const allSortedReports = [...reports].sort(
+    (a, b) => new Date(a.fiscalDateEnding) - new Date(b.fiscalDateEnding)
+  );
 
-  const categories = sortedReports.map(report => {
+  const filteredReports = dateRangeIndices
+    ? allSortedReports.slice(dateRangeIndices[0], dateRangeIndices[1] + 1)
+    : allSortedReports.slice(-5);
+
+  const categories = filteredReports.map(report => {
     const date = new Date(report.fiscalDateEnding);
     if (isYearly) {
       return date.getFullYear().toString();
@@ -207,7 +217,7 @@ export function initFinancialChart(containerId, reports, isYearly, selectedMetri
       const definition = METRIC_DEFINITIONS[metricKey];
       if (!definition) return null;
 
-      const data = sortedReports.map(report => {
+      const data = filteredReports.map(report => {
         const value = getMetricValue(report, metricKey);
         // For null values, use 0 instead of null to avoid ApexCharts issues
         return value !== null && !isNaN(value) ? value : 0;
@@ -307,7 +317,13 @@ export function initFinancialChart(containerId, reports, isYearly, selectedMetri
   financialChart.render();
 }
 
-export function updateCharts(historicalData, statements, isYearly, selectedMetrics = []) {
+export function updateCharts(
+  historicalData,
+  statements,
+  isYearly,
+  selectedMetrics = [],
+  dateRangeIndices
+) {
   const reports = isYearly ? statements.annualReports : statements.quarterlyReports;
 
   if (historicalData && historicalData.length > 0) {
@@ -315,7 +331,7 @@ export function updateCharts(historicalData, statements, isYearly, selectedMetri
   }
 
   if (reports && reports.length > 0) {
-    initFinancialChart('cashflow-chart', reports, isYearly, selectedMetrics);
+    initFinancialChart('cashflow-chart', reports, isYearly, selectedMetrics, dateRangeIndices);
   }
 }
 
