@@ -96,8 +96,9 @@ function initSlider() {
   minInput.max = maxIndex;
   maxInput.max = maxIndex;
 
-  // Default to showing all or last 5
-  const initialStart = Math.max(0, maxIndex - 4);
+  // Default to showing last 5 years (5 annual reports or 20 quarterly reports)
+  const range = currentState.isYearly ? 5 : 20;
+  const initialStart = Math.max(0, maxIndex - (range - 1));
   currentState.dateRangeIndices = [initialStart, maxIndex];
 
   minInput.value = currentState.dateRangeIndices[0];
@@ -223,7 +224,7 @@ async function loadData() {
   showLoading();
 
   try {
-    const dateRange = getDateRange(5);
+    const dateRange = getDateRange(20);
 
     const [historicalData, statements] = await Promise.all([
       fetchHistoricalData(ticker, dateRange.from, dateRange.to, '1wk'),

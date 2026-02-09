@@ -61,8 +61,8 @@ function generateMockFinancialStatements(ticker) {
   const quarterlyReports = [];
   const currentYear = new Date().getFullYear();
 
-  // Generate 5 years of annual data
-  for (let i = 0; i < 5; i++) {
+  // Generate 20 years of annual data
+  for (let i = 0; i < 20; i++) {
     const year = currentYear - i;
     const revenue = 200000000000 + Math.random() * 50000000000;
     const netIncome = revenue * (0.15 + Math.random() * 0.1);
@@ -134,8 +134,8 @@ function generateMockFinancialStatements(ticker) {
     });
   }
 
-  // Generate 8 quarters of data
-  for (let i = 0; i < 8; i++) {
+  // Generate 80 quarters (20 years) of data
+  for (let i = 0; i < 80; i++) {
     const date = new Date();
     date.setMonth(date.getMonth() - i * 3);
     const quarter = Math.floor(date.getMonth() / 3) + 1;
