@@ -8,6 +8,7 @@ const INCOME_STATEMENT_METRICS = [
   { key: 'incomeTaxExpense', label: 'Income Tax Expense' },
   { key: 'interestExpense', label: 'Interest Expense' },
   { key: 'netIncome', label: 'Net Income' },
+  { key: 'reportedEPS', label: 'EPS' },
   { key: 'researchAndDevelopment', label: 'R&D Expenses' },
   { key: 'sellingGeneralAndAdministrative', label: 'SG&A Expenses' },
   { key: 'depreciationAndAmortization', label: 'Depreciation & Amortization' },
@@ -88,6 +89,9 @@ function getMetricValue(report, metric) {
   }
   if (report.cashFlow && metric.key in report.cashFlow) {
     return report.cashFlow[metric.key];
+  }
+  if (report.ratio && metric.key in report.ratio) {
+    return report.ratio[metric.key];
   }
   return null;
 }

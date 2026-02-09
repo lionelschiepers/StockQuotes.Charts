@@ -23,6 +23,7 @@ const METRIC_DEFINITIONS = {
   capitalExpenditures: { label: 'Capital Expenditures', category: 'cash' },
   dividendPayout: { label: 'Dividend Payout', category: 'cash' },
   freeCashFlow: { label: 'Free Cash Flow', category: 'cash' },
+  reportedEPS: { label: 'EPS', category: 'income' },
 };
 
 const commonChartOptions = {
@@ -58,6 +59,10 @@ function getMetricValue(report, metricKey) {
   // Check cash flow
   if (report.cashFlow && report.cashFlow[metricKey] !== undefined) {
     return parseFloat(report.cashFlow[metricKey]);
+  }
+  // Check ratio
+  if (report.ratio && report.ratio[metricKey] !== undefined) {
+    return parseFloat(report.ratio[metricKey]);
   }
   // Handle calculated metrics
   if (metricKey === 'freeCashFlow') {

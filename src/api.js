@@ -92,6 +92,9 @@ function generateMockFinancialStatements(ticker) {
         costOfRevenue: Math.round(revenue - grossProfit),
         operatingExpenses: Math.round(sgaExpense + rndExpense),
       },
+      ratio: {
+        reportedEPS: (netIncome / 1000000000).toFixed(2),
+      },
       balanceSheet: {
         totalAssets: Math.round(revenue * 2),
         totalLiabilities: Math.round(revenue * 1.2),
@@ -164,6 +167,9 @@ function generateMockFinancialStatements(ticker) {
         depreciationAndAmortization: Math.round(depreciationAmortization),
         costOfRevenue: Math.round(revenue - grossProfit),
         operatingExpenses: Math.round(sgaExpense + rndExpense),
+      },
+      ratio: {
+        reportedEPS: (netIncome / 250000000).toFixed(2),
       },
       balanceSheet: {
         totalAssets: Math.round(revenue * 8),
