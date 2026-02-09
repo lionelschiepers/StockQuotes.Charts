@@ -7,14 +7,14 @@
 }
 
 /* Dual Range Slider Styles */
-#date-slider-container input[type='range'] {
+#global-slider-container input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   background: none;
   pointer-events: none;
 }
 
-#date-slider-container input[type='range']::-webkit-slider-thumb {
+#global-slider-container input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   height: 18px;
@@ -27,7 +27,7 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-#date-slider-container input[type='range']::-moz-range-thumb {
+#global-slider-container input[type='range']::-moz-range-thumb {
   height: 18px;
   width: 18px;
   border-radius: 50%;
@@ -38,6 +38,6 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-#date-slider-container {
+#global-slider-container {
   user-select: none;
 }

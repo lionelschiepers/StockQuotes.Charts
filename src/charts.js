@@ -87,7 +87,7 @@ function formatChartValue(value) {
   return value.toFixed(2);
 }
 
-export function initStockPriceChart(containerId, data) {
+export function initStockPriceChart(containerId, data, dateRange) {
   const container = document.getElementById(containerId);
   if (!container) {
     console.error(`Container #${containerId} not found`);
@@ -102,7 +102,13 @@ export function initStockPriceChart(containerId, data) {
     return;
   }
 
-  const series = data.map(item => ({
+  const filteredData = dateRange
+    ? data.filter(
+        item => new Date(item.date) >= dateRange.start && new Date(item.date) <= dateRange.end
+      )
+    : data;
+
+  const series = filteredData.map(item => ({
     x: new Date(item.date).getTime(),
     y: item.close,
   }));
@@ -322,12 +328,13 @@ export function updateCharts(
   statements,
   isYearly,
   selectedMetrics = [],
-  dateRangeIndices
+  dateRangeIndices,
+  dateRange
 ) {
   const reports = isYearly ? statements.annualReports : statements.quarterlyReports;
 
   if (historicalData && historicalData.length > 0) {
-    initStockPriceChart('stock-price-chart', historicalData);
+    initStockPriceChart('stock-price-chart', historicalData, dateRange);
   }
 
   if (reports && reports.length > 0) {

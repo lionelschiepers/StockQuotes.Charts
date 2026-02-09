@@ -13,7 +13,7 @@ let currentState = {
   historicalData: null,
   statements: null,
   selectedMetrics: ['totalRevenue'], // Default: Total Revenue selected
-  dateRangeIndices: [0, 0], // Will be initialized when data loads
+  dateRangeIndices: [0, 0], // For financial metrics
 };
 
 function showLoading() {
@@ -70,7 +70,8 @@ function handleMetricSelectionChange(metricKey, isSelected) {
     currentState.statements,
     currentState.isYearly,
     currentState.selectedMetrics,
-    currentState.dateRangeIndices
+    currentState.dateRangeIndices,
+    currentState.dateRange
   );
 }
 
@@ -102,15 +103,46 @@ function initSlider() {
   minInput.value = currentState.dateRangeIndices[0];
   maxInput.value = currentState.dateRangeIndices[1];
 
-  function updateSlider() {
+  function getReportStartDate(report) {
+    const date = new Date(report.fiscalDateEnding);
+    if (currentState.isYearly) {
+      date.setFullYear(date.getFullYear() - 1);
+    } else {
+      date.setMonth(date.getMonth() - 3);
+    }
+    date.setDate(date.getDate() + 1);
+    return date;
+  }
+
+  function updateSlider(e) {
     let min = parseInt(minInput.value);
     let max = parseInt(maxInput.value);
+
+    // If they are equal, we might want to bring one to front based on direction
+    // But for now, just handle the z-index of the one being moved
+    if (e && e.target) {
+      if (e.target.id === 'slider-min') {
+        minInput.style.zIndex = '20';
+        maxInput.style.zIndex = '10';
+      } else {
+        minInput.style.zIndex = '10';
+        maxInput.style.zIndex = '20';
+      }
+    }
 
     if (min > max) {
       [min, max] = [max, min];
     }
 
     currentState.dateRangeIndices = [min, max];
+
+    // Calculate date range for stock chart
+    const startReport = sortedReports[min];
+    const endReport = sortedReports[max];
+    currentState.dateRange = {
+      start: getReportStartDate(startReport),
+      end: new Date(endReport.fiscalDateEnding),
+    };
 
     const percent1 = (min / maxIndex) * 100;
     const percent2 = (max / maxIndex) * 100;
@@ -142,18 +174,14 @@ function initSlider() {
   // If there are too many reports, just show year start/end or every few years
   const numLabels = Math.min(years.length, 5);
   for (let i = 0; i < numLabels; i++) {
-    const yearIdx =
-      numLabels > 1 ? Math.floor((i / (numLabels - 1)) * (years.length - 1)) : 0;
+    const yearIdx = numLabels > 1 ? Math.floor((i / (numLabels - 1)) * (years.length - 1)) : 0;
     const label = document.createElement('span');
     label.textContent = years[yearIdx];
     labelContainer.appendChild(label);
   }
 
-  // Initial track update
-  const percent1 = (currentState.dateRangeIndices[0] / maxIndex) * 100;
-  const percent2 = (currentState.dateRangeIndices[1] / maxIndex) * 100;
-  track.style.left = percent1 + '%';
-  track.style.width = percent2 - percent1 + '%';
+  // Initial update
+  updateSlider();
 }
 
 function updateDashboard() {
@@ -166,7 +194,8 @@ function updateDashboard() {
     currentState.statements,
     currentState.isYearly,
     currentState.selectedMetrics,
-    currentState.dateRangeIndices
+    currentState.dateRangeIndices,
+    currentState.dateRange
   );
   renderTable(
     'financial-table',
@@ -197,7 +226,7 @@ async function loadData() {
     const dateRange = getDateRange(5);
 
     const [historicalData, statements] = await Promise.all([
-      fetchHistoricalData(ticker, dateRange.from, dateRange.to),
+      fetchHistoricalData(ticker, dateRange.from, dateRange.to, '1wk'),
       fetchFinancialStatements(ticker),
     ]);
 

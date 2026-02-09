@@ -1,18 +1,21 @@
 const API_BASE_URL = 'https://stockquote.lionelschiepers.synology.me/api';
 
 // Mock data for demonstration when API is unavailable
-function generateMockHistoricalData(ticker, fromDate, toDate) {
+function generateMockHistoricalData(ticker, fromDate, toDate, interval = '1d') {
   const data = [];
   const start = new Date(fromDate);
   const end = new Date(toDate);
   let currentPrice = 150 + Math.random() * 50;
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    // Skip weekends
-    if (d.getDay() === 0 || d.getDay() === 6) continue;
+  const step = interval === '1wk' ? 7 : 1;
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + step)) {
+    // Skip weekends for daily data
+    if (step === 1 && (d.getDay() === 0 || d.getDay() === 6)) continue;
 
     // Random price movement
-    const change = (Math.random() - 0.5) * 5;
+    const volatility = step === 7 ? 15 : 5;
+    const change = (Math.random() - 0.5) * volatility;
     currentPrice = Math.max(50, currentPrice + change);
 
     data.push({
@@ -24,8 +27,8 @@ function generateMockHistoricalData(ticker, fromDate, toDate) {
   return data;
 }
 
-export async function fetchHistoricalData(ticker, fromDate, toDate) {
-  const url = `${API_BASE_URL}/yahoo-finance-historical?ticker=${ticker}&from=${fromDate}&to=${toDate}`;
+export async function fetchHistoricalData(ticker, fromDate, toDate, interval = '1d') {
+  const url = `${API_BASE_URL}/yahoo-finance-historical?ticker=${ticker}&from=${fromDate}&to=${toDate}&interval=${interval}&fields=close`;
 
   try {
     const response = await fetch(url);
@@ -45,10 +48,10 @@ export async function fetchHistoricalData(ticker, fromDate, toDate) {
 
     // Fallback if data format is unexpected
     console.warn('Unexpected API response format, using mock data');
-    return generateMockHistoricalData(ticker, fromDate, toDate);
+    return generateMockHistoricalData(ticker, fromDate, toDate, interval);
   } catch (error) {
     console.warn('API unavailable, using mock data for historical prices');
-    return generateMockHistoricalData(ticker, fromDate, toDate);
+    return generateMockHistoricalData(ticker, fromDate, toDate, interval);
   }
 }
 
