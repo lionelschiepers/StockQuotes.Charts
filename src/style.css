@@ -5,7 +5,7 @@
     --bg-primary: #05070a;
     --bg-secondary: #0d1117;
     --bg-card: #111827;
-    --bg-card-hover: #1f2937;
+    --bg-card-hover: #374151;
     --border-color: #1f2937;
     --border-subtle: #2d3748;
     --text-primary: #ffffff;
@@ -56,4 +56,37 @@
 
 #global-slider-container {
   user-select: none;
+}
+
+/* Table row hover effect */
+.table-row-hover {
+  transition: background-color 0.15s ease;
+}
+
+.table-row-hover:hover {
+  background-color: var(--bg-card-hover) !important;
+}
+
+/* Sticky columns for table */
+.sticky-col {
+  box-shadow: 2px 0 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+.sticky-col-1 {
+  min-width: 40px;
+}
+
+.sticky-col-2 {
+  min-width: 200px;
+}
+
+/* Hide scrollbar for better look */
+.overflow-x-auto {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
 }

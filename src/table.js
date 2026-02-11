@@ -144,31 +144,32 @@ function createTableSection(
   let html = `
     <div class="mb-6">
       <h3 class="text-lg font-semibold mb-3 px-4" style="color: var(--text-primary);">${title}</h3>
-      <table class="w-full">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--border-color);">
-            <th class="text-left py-3 px-4 font-medium w-8" style="color: var(--text-secondary);"></th>
-            <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary);">Metric</th>
-            ${sortedReports
-              .map(
-                report => `
-              <th class="text-right py-3 px-4 font-medium" style="color: var(--text-secondary);">
-                ${formatDate(report.fiscalDateEnding, isYearly)}
-              </th>
-            `
-              )
-              .join('')}
-          </tr>
-        </thead>
-        <tbody>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+              <th class="text-left py-3 px-4 font-medium w-8 sticky-col sticky-col-1" style="color: var(--text-secondary); position: sticky; left: 0; z-index: 10; background-color: var(--bg-card);"></th>
+              <th class="text-left py-3 px-4 font-medium sticky-col sticky-col-2" style="color: var(--text-secondary); position: sticky; left: 40px; z-index: 10; background-color: var(--bg-card);">Metric</th>
+              ${sortedReports
+                .map(
+                  report => `
+                <th class="text-right py-3 px-4 font-medium" style="color: var(--text-secondary);">
+                  ${formatDate(report.fiscalDateEnding, isYearly)}
+                </th>
+              `
+                )
+                .join('')}
+            </tr>
+          </thead>
+          <tbody>
   `;
 
   metrics.forEach((metric, index) => {
     const rowBg = index % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-secondary)';
     const isChecked = selectedMetrics.includes(metric.key) ? 'checked' : '';
     html += `
-      <tr style="background-color: ${rowBg};">
-        <td class="py-3 px-4">
+      <tr class="table-row-hover" style="background-color: ${rowBg};">
+        <td class="py-3 px-4 sticky-col sticky-col-1" style="background-color: ${rowBg}; position: sticky; left: 0; z-index: 5;">
           <input 
             type="checkbox" 
             class="metric-checkbox w-4 h-4 rounded cursor-pointer"
@@ -177,7 +178,7 @@ function createTableSection(
             ${isChecked}
           />
         </td>
-        <td class="py-3 px-4" style="color: var(--text-secondary);">${metric.label}</td>
+        <td class="py-3 px-4 sticky-col sticky-col-2" style="color: var(--text-secondary); background-color: ${rowBg}; position: sticky; left: 40px; z-index: 5;">${metric.label}</td>
         ${sortedReports
           .map(report => {
             const value = getMetricValue(report, metric);
@@ -193,8 +194,9 @@ function createTableSection(
   });
 
   html += `
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 
