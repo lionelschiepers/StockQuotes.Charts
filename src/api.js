@@ -38,20 +38,28 @@ export async function fetchHistoricalData(ticker, fromDate, toDate, interval = '
     const data = await response.json();
 
     // API returns { meta: {...}, quotes: [...] }
-    // Extract quotes array and map to expected format
     if (data && data.quotes && Array.isArray(data.quotes)) {
-      return data.quotes.map(quote => ({
-        date: quote.date,
-        close: quote.close,
-      }));
+      return {
+        meta: data.meta || {},
+        quotes: data.quotes.map(quote => ({
+          date: quote.date,
+          close: quote.close,
+        })),
+      };
     }
 
     // Fallback if data format is unexpected
     console.warn('Unexpected API response format, using mock data');
-    return generateMockHistoricalData(ticker, fromDate, toDate, interval);
+    return {
+      meta: { longName: ticker.toUpperCase() },
+      quotes: generateMockHistoricalData(ticker, fromDate, toDate, interval),
+    };
   } catch (error) {
     console.warn('API unavailable, using mock data for historical prices');
-    return generateMockHistoricalData(ticker, fromDate, toDate, interval);
+    return {
+      meta: { longName: ticker.toUpperCase() },
+      quotes: generateMockHistoricalData(ticker, fromDate, toDate, interval),
+    };
   }
 }
 

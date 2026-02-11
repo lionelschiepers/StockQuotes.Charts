@@ -44,15 +44,15 @@ function updateToggleButtons() {
   const quarterlyBtn = document.getElementById('toggle-quarterly');
 
   if (currentState.isYearly) {
-    yearlyBtn.className =
-      'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 text-white';
-    quarterlyBtn.className =
-      'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white';
+    yearlyBtn.style.backgroundColor = 'var(--accent-blue)';
+    yearlyBtn.style.color = 'white';
+    quarterlyBtn.style.backgroundColor = 'transparent';
+    quarterlyBtn.style.color = 'var(--text-secondary)';
   } else {
-    yearlyBtn.className =
-      'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-300 hover:text-white';
-    quarterlyBtn.className =
-      'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 text-white';
+    yearlyBtn.style.backgroundColor = 'transparent';
+    yearlyBtn.style.color = 'var(--text-secondary)';
+    quarterlyBtn.style.backgroundColor = 'var(--accent-blue)';
+    quarterlyBtn.style.color = 'white';
   }
 }
 
@@ -66,7 +66,7 @@ function handleMetricSelectionChange(metricKey, isSelected) {
   }
   // Update chart with new selection
   updateCharts(
-    currentState.historicalData,
+    currentState.historicalData?.quotes,
     currentState.statements,
     currentState.isYearly,
     currentState.selectedMetrics,
@@ -140,9 +140,10 @@ function initSlider() {
     // Calculate date range for stock chart
     const startReport = sortedReports[min];
     const endReport = sortedReports[max];
+    const maxIndex = sortedReports.length - 1;
     currentState.dateRange = {
       start: getReportStartDate(startReport),
-      end: new Date(endReport.fiscalDateEnding),
+      end: max === maxIndex ? new Date() : new Date(endReport.fiscalDateEnding),
     };
 
     const percent1 = (min / maxIndex) * 100;
@@ -167,7 +168,11 @@ function initSlider() {
   if (sortedReports.length <= 20) {
     sortedReports.forEach(() => {
       const dot = document.createElement('div');
-      dot.className = 'w-1.5 h-1.5 bg-gray-900 rounded-full opacity-50';
+      dot.style.width = '6px';
+      dot.style.height = '6px';
+      dot.style.backgroundColor = 'var(--bg-primary)';
+      dot.style.borderRadius = '50%';
+      dot.style.opacity = '0.5';
       dotContainer.appendChild(dot);
     });
   }
@@ -191,7 +196,7 @@ function updateDashboard() {
   }
 
   updateCharts(
-    currentState.historicalData,
+    currentState.historicalData.quotes,
     currentState.statements,
     currentState.isYearly,
     currentState.selectedMetrics,
@@ -218,8 +223,7 @@ async function loadData() {
 
   currentState.ticker = ticker;
   document.getElementById('ticker-display').textContent = ticker.toUpperCase();
-  document.getElementById('company-name').textContent =
-    `${ticker.toUpperCase()} Financial Dashboard`;
+  document.getElementById('company-name').textContent = ticker.toUpperCase();
 
   showLoading();
 
@@ -233,6 +237,9 @@ async function loadData() {
 
     currentState.historicalData = historicalData;
     currentState.statements = statements;
+
+    const longName = historicalData.meta?.longName || ticker.toUpperCase();
+    document.getElementById('company-name').textContent = longName;
 
     initSlider();
     updateDashboard();

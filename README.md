@@ -1,6 +1,6 @@
-# 📈 Financial Metrics Dashboard
+# 📈 Stock Analysis Tool
 
-A modern, interactive financial dashboard for tracking stock prices and company financial performance. Built with Vite, Tailwind CSS v4, and ApexCharts.
+A modern, interactive stock analysis tool for tracking stock prices and company financial performance. Built with Vite, Tailwind CSS v4, and ApexCharts.
 
 ![Stock Price Chart](test_multi_metric.png)
 

@@ -9,6 +9,8 @@ const METRIC_DEFINITIONS = {
   totalRevenue: { label: 'Total Revenue', category: 'income' },
   netIncome: { label: 'Net Income', category: 'income' },
   operatingIncome: { label: 'Operating Income', category: 'income' },
+  ebit: { label: 'EBIT', category: 'income' },
+  ebitda: { label: 'EBITDA', category: 'income' },
   grossProfit: { label: 'Gross Profit', category: 'income' },
   // Balance Sheet
   totalAssets: { label: 'Total Assets', category: 'balance' },
@@ -18,6 +20,10 @@ const METRIC_DEFINITIONS = {
     label: 'Cash and Cash Equivalents',
     category: 'balance',
   },
+  shortTermInvestments: { label: 'Short Term Investments', category: 'balance' },
+  longTermInvestments: { label: 'Long Term Investments', category: 'balance' },
+  shortTermDebt: { label: 'Short Term Debt', category: 'balance' },
+  longTermDebt: { label: 'Long Term Debt', category: 'balance' },
   // Cash Flow
   operatingCashflow: { label: 'Operating Cashflow', category: 'cash' },
   capitalExpenditures: { label: 'Capital Expenditures', category: 'cash' },
@@ -33,13 +39,13 @@ const commonChartOptions = {
   },
   chart: {
     background: 'transparent',
-    foreColor: '#e5e7eb',
+    foreColor: '#9ca3af',
     toolbar: {
       show: false,
     },
   },
   grid: {
-    borderColor: '#374151',
+    borderColor: '#1f2937',
     strokeDashArray: 0,
   },
   dataLabels: {
@@ -48,22 +54,25 @@ const commonChartOptions = {
 };
 
 function getMetricValue(report, metricKey) {
+  let value = null;
+
   // Check income statement
   if (report.incomeStatement && report.incomeStatement[metricKey] !== undefined) {
-    return parseFloat(report.incomeStatement[metricKey]);
+    value = parseFloat(report.incomeStatement[metricKey]);
   }
   // Check balance sheet
-  if (report.balanceSheet && report.balanceSheet[metricKey] !== undefined) {
-    return parseFloat(report.balanceSheet[metricKey]);
+  else if (report.balanceSheet && report.balanceSheet[metricKey] !== undefined) {
+    value = parseFloat(report.balanceSheet[metricKey]);
   }
   // Check cash flow
-  if (report.cashFlow && report.cashFlow[metricKey] !== undefined) {
-    return parseFloat(report.cashFlow[metricKey]);
+  else if (report.cashFlow && report.cashFlow[metricKey] !== undefined) {
+    value = parseFloat(report.cashFlow[metricKey]);
   }
   // Check ratio
-  if (report.ratio && report.ratio[metricKey] !== undefined) {
-    return parseFloat(report.ratio[metricKey]);
+  else if (report.ratio && report.ratio[metricKey] !== undefined) {
+    value = parseFloat(report.ratio[metricKey]);
   }
+
   // Handle calculated metrics
   if (metricKey === 'freeCashFlow') {
     const operatingCF = parseFloat(report.cashFlow?.operatingCashflow || 0);
@@ -72,7 +81,29 @@ function getMetricValue(report, metricKey) {
       return operatingCF - capex;
     }
   }
-  return null;
+
+  // Fallback for EBIT
+  if ((value === null || value === undefined || isNaN(value)) && metricKey === 'ebit') {
+    const opIncome = parseFloat(report.incomeStatement?.operatingIncome);
+    return isNaN(opIncome) ? null : opIncome;
+  }
+
+  // Fallback for EBITDA
+  if ((value === null || value === undefined || isNaN(value)) && metricKey === 'ebitda') {
+    const ebitVal = report.incomeStatement?.ebit ?? report.incomeStatement?.operatingIncome;
+    const daVal =
+      report.incomeStatement?.depreciationAndAmortization ??
+      report.cashFlow?.depreciationDepletionAndAmortization;
+
+    const ebit = parseFloat(ebitVal);
+    const da = parseFloat(daVal);
+
+    if (!isNaN(ebit) && !isNaN(da)) {
+      return ebit + da;
+    }
+  }
+
+  return value !== null && !isNaN(value) ? value : null;
 }
 
 function formatChartValue(value) {
@@ -93,8 +124,6 @@ export function initStockPriceChart(containerId, data, dateRange) {
     console.error(`Container #${containerId} not found`);
     return;
   }
-
-  console.log(`Rendering stock price chart with ${data?.length || 0} data points`);
 
   if (!data || data.length === 0) {
     container.innerHTML =
@@ -138,7 +167,7 @@ export function initStockPriceChart(containerId, data, dateRange) {
       type: 'datetime',
       labels: {
         style: {
-          colors: '#9ca3af',
+          colors: '#6b7280',
         },
       },
       axisBorder: {
@@ -151,7 +180,7 @@ export function initStockPriceChart(containerId, data, dateRange) {
     yaxis: {
       labels: {
         style: {
-          colors: '#9ca3af',
+          colors: '#6b7280',
         },
         formatter: value => {
           return '$' + value.toFixed(2);
@@ -160,6 +189,9 @@ export function initStockPriceChart(containerId, data, dateRange) {
     },
     tooltip: {
       theme: 'dark',
+      x: {
+        format: 'dd MMM yyyy',
+      },
       y: {
         formatter: value => {
           return '$' + value.toFixed(2);
@@ -246,10 +278,6 @@ export function initFinancialChart(
     return;
   }
 
-  // Debug logging
-  console.log('Series data:', JSON.stringify(series, null, 2));
-  console.log('Categories:', categories);
-
   const options = {
     ...commonChartOptions,
     series: series,
@@ -278,7 +306,7 @@ export function initFinancialChart(
       categories: categories,
       labels: {
         style: {
-          colors: '#9ca3af',
+          colors: '#6b7280',
         },
       },
       axisBorder: {
@@ -291,7 +319,7 @@ export function initFinancialChart(
     yaxis: {
       labels: {
         style: {
-          colors: '#9ca3af',
+          colors: '#6b7280',
         },
         formatter: value => {
           return formatChartValue(value);
@@ -309,7 +337,7 @@ export function initFinancialChart(
     legend: {
       position: 'top',
       labels: {
-        colors: '#e5e7eb',
+        colors: '#9ca3af',
       },
     },
     colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],

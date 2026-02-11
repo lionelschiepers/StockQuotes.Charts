@@ -81,19 +81,35 @@ function getMetricValue(report, metric) {
     return null;
   }
 
+  let value = null;
   if (report.incomeStatement && metric.key in report.incomeStatement) {
-    return report.incomeStatement[metric.key];
+    value = report.incomeStatement[metric.key];
+  } else if (report.balanceSheet && metric.key in report.balanceSheet) {
+    value = report.balanceSheet[metric.key];
+  } else if (report.cashFlow && metric.key in report.cashFlow) {
+    value = report.cashFlow[metric.key];
+  } else if (report.ratio && metric.key in report.ratio) {
+    value = report.ratio[metric.key];
   }
-  if (report.balanceSheet && metric.key in report.balanceSheet) {
-    return report.balanceSheet[metric.key];
+
+  // Fallback for EBIT
+  if ((value === null || value === undefined) && metric.key === 'ebit') {
+    return report.incomeStatement?.operatingIncome ?? null;
   }
-  if (report.cashFlow && metric.key in report.cashFlow) {
-    return report.cashFlow[metric.key];
+
+  // Fallback for EBITDA
+  if ((value === null || value === undefined) && metric.key === 'ebitda') {
+    const ebit = report.incomeStatement?.ebit ?? report.incomeStatement?.operatingIncome;
+    const da =
+      report.incomeStatement?.depreciationAndAmortization ??
+      report.cashFlow?.depreciationDepletionAndAmortization;
+
+    if (ebit !== undefined && ebit !== null && da !== undefined && da !== null) {
+      return parseFloat(ebit) + parseFloat(da);
+    }
   }
-  if (report.ratio && metric.key in report.ratio) {
-    return report.ratio[metric.key];
-  }
-  return null;
+
+  return value;
 }
 
 function formatDate(dateStr, isYearly) {
@@ -127,16 +143,16 @@ function createTableSection(
 
   let html = `
     <div class="mb-6">
-      <h3 class="text-lg font-semibold text-white mb-3 px-4">${title}</h3>
+      <h3 class="text-lg font-semibold mb-3 px-4" style="color: var(--text-primary);">${title}</h3>
       <table class="w-full">
         <thead>
-          <tr class="border-b border-gray-700">
-            <th class="text-left py-3 px-4 text-gray-300 font-medium w-8"></th>
-            <th class="text-left py-3 px-4 text-gray-300 font-medium">Metric</th>
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <th class="text-left py-3 px-4 font-medium w-8" style="color: var(--text-secondary);"></th>
+            <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary);">Metric</th>
             ${sortedReports
               .map(
                 report => `
-              <th class="text-right py-3 px-4 text-gray-300 font-medium">
+              <th class="text-right py-3 px-4 font-medium" style="color: var(--text-secondary);">
                 ${formatDate(report.fiscalDateEnding, isYearly)}
               </th>
             `
@@ -148,26 +164,28 @@ function createTableSection(
   `;
 
   metrics.forEach((metric, index) => {
-    const rowClass = index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750';
+    const rowBg = index % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-secondary)';
     const isChecked = selectedMetrics.includes(metric.key) ? 'checked' : '';
     html += `
-      <tr class="${rowClass}">
+      <tr style="background-color: ${rowBg};">
         <td class="py-3 px-4">
           <input 
             type="checkbox" 
-            class="metric-checkbox w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-700 cursor-pointer"
+            class="metric-checkbox w-4 h-4 rounded cursor-pointer"
+            style="background-color: var(--bg-secondary); border: 1px solid var(--border-subtle);"
             data-metric="${metric.key}"
             ${isChecked}
           />
         </td>
-        <td class="py-3 px-4 text-gray-300">${metric.label}</td>
+        <td class="py-3 px-4" style="color: var(--text-secondary);">${metric.label}</td>
         ${sortedReports
           .map(report => {
             const value = getMetricValue(report, metric);
             const formatted = formatNumber(value);
             const numValue = parseFloat(value);
-            const colorClass = numValue < 0 ? 'text-red-400' : 'text-gray-300';
-            return `<td class="text-right py-3 px-4 ${colorClass}">${formatted}</td>`;
+            const colorStyle =
+              numValue < 0 ? 'color: var(--accent-red);' : 'color: var(--text-secondary);';
+            return `<td class="text-right py-3 px-4" style="${colorStyle}">${formatted}</td>`;
           })
           .join('')}
       </tr>
@@ -197,7 +215,8 @@ export function renderTable(
   const reports = isYearly ? statements.annualReports : statements.quarterlyReports;
 
   if (!reports || reports.length === 0) {
-    container.innerHTML = '<p class="text-gray-400 p-4">No financial data available</p>';
+    container.innerHTML =
+      '<p class="p-4" style="color: var(--text-muted);">No financial data available</p>';
     return;
   }
 
